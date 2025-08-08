@@ -2,7 +2,7 @@
 import { Command } from "commander";
 import { current } from "./commands/current";
 import { list } from "./commands/list";
-import { switchTo } from "./commands/switch";
+import { switchTo, switchInteractive } from "./commands/switch";
 import { init } from "./commands/init";
 import { create } from "./commands/create";
 
@@ -10,8 +10,25 @@ const program = new Command();
 
 program
   .name("ccswitch")
-  .description("Claude Code configuration switcher - Git-based context management")
-  .version("0.3.0");
+  .description("Claude Code Switch - Git-based configuration management for ~/.claude\n\n" +
+    "  Manage different Claude Code configurations using Git branches.\n" +
+    "  Each branch can contain different settings, reducing token usage by 60-70%.")
+  .version("0.4.0")
+  .addHelpText("after", `
+Examples:
+  $ ccswitch init                  Initialize Git repository in ~/.claude
+  $ ccswitch create slim/minimal   Create a minimal configuration branch
+  $ ccswitch switch                Interactive branch selection
+  $ ccswitch switch project/web    Switch to specific branch
+  $ ccswitch list                  Show all configuration branches
+
+Naming Conventions:
+  slim/*      Minimal configurations for reduced token usage
+  project/*   Project-specific configurations
+  client/*    Client-specific settings
+  persona/*   Persona-focused configurations
+  
+For more information, visit: https://github.com/yourusername/ccswitch`);
 
 program
   .command("init")
@@ -37,11 +54,15 @@ program
   });
 
 program
-  .command("switch <branch>")
+  .command("switch [branch]")
   .alias("sw")
-  .description("Switch to a different Git branch in ~/.claude")
-  .action(async (branch: string) => {
-    await switchTo(branch);
+  .description("Switch to a different Git branch in ~/.claude (interactive if no branch specified)")
+  .action(async (branch?: string) => {
+    if (branch) {
+      await switchTo(branch);
+    } else {
+      await switchInteractive();
+    }
   });
 
 program

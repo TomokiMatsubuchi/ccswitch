@@ -1,5 +1,52 @@
 import chalk from "chalk";
-import { switchBranch, getCurrentBranch } from "../lib/git";
+import { select } from "@inquirer/prompts";
+import { switchBranch, getCurrentBranch, getBranches } from "../lib/git";
+
+/**
+ * Switch to a different Git branch in ~/.claude interactively
+ */
+export async function switchInteractive(): Promise<void> {
+  try {
+    const [branches, currentBranch] = await Promise.all([
+      getBranches(),
+      getCurrentBranch()
+    ]);
+
+    if (branches.length <= 1) {
+      console.log(chalk.yellow("No other branches available to switch to"));
+      console.log(chalk.gray("Use 'ccswitch create <branch>' to create a new branch"));
+      return;
+    }
+
+    // Filter out current branch and create choices
+    const choices = branches
+      .filter(branch => branch !== currentBranch)
+      .map(branch => ({
+        name: branch,
+        value: branch,
+        description: branch.startsWith("slim/") ? "Minimal configuration" :
+                    branch.startsWith("project/") ? "Project-specific" :
+                    branch.startsWith("persona/") ? "Persona-focused" :
+                    branch.startsWith("client/") ? "Client-specific" :
+                    undefined
+      }));
+
+    const selectedBranch = await select({
+      message: `Current branch: ${chalk.cyan(currentBranch)}. Select branch to switch to:`,
+      choices
+    });
+
+    await switchTo(selectedBranch);
+  } catch (error) {
+    if (error instanceof Error) {
+      if (error.message.includes("User force closed")) {
+        console.log(chalk.gray("Cancelled"));
+        return;
+      }
+      console.error(chalk.red(`Error: ${error.message}`));
+    }
+  }
+}
 
 /**
  * Switch to a different Git branch in ~/.claude

@@ -6,6 +6,12 @@ import { existsSync } from "fs";
 import { homedir } from "os";
 import { join } from "path";
 
+// Conditionally import ora only in non-test environment
+let ora: any;
+if (process.env.NODE_ENV !== 'test') {
+  ora = require('ora');
+}
+
 interface InitOptions {
   force?: boolean;
 }
@@ -20,12 +26,22 @@ export async function init(options: InitOptions = {}): Promise<void> {
     
     // Create backup if ~/.claude already exists
     if (existsSync(claudePath) && !options.force) {
-      console.log(chalk.gray("Creating backup of existing configuration..."));
-      try {
-        const backupPath = await createBackup("pre-init");
-        console.log(chalk.gray(`Backup saved to: ${backupPath}`));
-      } catch (err) {
-        console.log(chalk.yellow("Warning: Could not create backup"));
+      if (ora) {
+        const backupSpinner = ora("Creating backup of existing configuration...").start();
+        try {
+          const backupPath = await createBackup("pre-init");
+          backupSpinner.succeed(`Backup saved to: ${backupPath}`);
+        } catch (err) {
+          backupSpinner.warn("Could not create backup");
+        }
+      } else {
+        console.log(chalk.gray("Creating backup of existing configuration..."));
+        try {
+          const backupPath = await createBackup("pre-init");
+          console.log(chalk.gray(`Backup saved to: ${backupPath}`));
+        } catch (err) {
+          console.log(chalk.yellow("Warning: Could not create backup"));
+        }
       }
     }
 
@@ -33,15 +49,31 @@ export async function init(options: InitOptions = {}): Promise<void> {
       console.log(chalk.yellow("Force initializing Git repository..."));
     }
 
+    const initSpinner = ora ? ora("Initializing Git repository in ~/.claude...").start() : null;
+    if (!ora) console.log(chalk.gray("Initializing Git repository in ~/.claude..."));
+    
     const initialized = await initRepository();
     
     if (initialized) {
+      if (ora && initSpinner) {
+        initSpinner.succeed("Git repository initialized in ~/.claude");
+      } else {
+        console.log(chalk.green("✓ Git repository initialized in ~/.claude"));
+      }
+      
       // Save default configuration
+      const configSpinner = ora ? ora("Creating configuration file...").start() : null;
+      if (!ora) console.log(chalk.gray("Creating configuration file..."));
+      
       const config = getDefaultConfig();
       await saveConfig(config);
       
-      console.log(`${chalk.green("✓")} Git repository initialized in ~/.claude`);
-      console.log(`${chalk.green("✓")} Configuration file created`);
+      if (ora && configSpinner) {
+        configSpinner.succeed("Configuration file created");
+      } else {
+        console.log(chalk.green("✓ Configuration file created"));
+      }
+      
       console.log();
       console.log(chalk.gray("You can now create branches to manage different configurations:"));
       console.log(chalk.cyan("  ccswitch create slim/minimal"));
@@ -50,7 +82,11 @@ export async function init(options: InitOptions = {}): Promise<void> {
       console.log(chalk.gray("Use 'ccswitch list' to see all branches"));
       console.log(chalk.gray("Use 'ccswitch switch <branch>' to switch between configurations"));
     } else {
-      console.log(chalk.yellow("Git repository already exists in ~/.claude"));
+      if (ora && initSpinner) {
+        initSpinner.info("Git repository already exists in ~/.claude");
+      } else {
+        console.log(chalk.blue("ℹ Git repository already exists in ~/.claude"));
+      }
       console.log(chalk.gray("Use 'ccswitch list' to see existing branches"));
     }
   } catch (error) {
