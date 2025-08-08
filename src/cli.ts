@@ -3,13 +3,23 @@ import { Command } from "commander";
 import { current } from "./commands/current";
 import { list } from "./commands/list";
 import { switchTo } from "./commands/switch";
+import { init } from "./commands/init";
+import { create } from "./commands/create";
 
 const program = new Command();
 
 program
   .name("ccswitch")
   .description("Claude Code configuration switcher - Git-based context management")
-  .version("0.2.0");
+  .version("0.3.0");
+
+program
+  .command("init")
+  .description("Initialize Git repository in ~/.claude")
+  .option("-f, --force", "Force initialization")
+  .action(async (options) => {
+    await init(options);
+  });
 
 program
   .command("current")
@@ -32,6 +42,14 @@ program
   .description("Switch to a different Git branch in ~/.claude")
   .action(async (branch: string) => {
     await switchTo(branch);
+  });
+
+program
+  .command("create <branch>")
+  .alias("new")
+  .description("Create a new Git branch in ~/.claude")
+  .action(async (branch: string) => {
+    await create(branch);
   });
 
 // Parse command line arguments
