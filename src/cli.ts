@@ -5,6 +5,7 @@ import { list } from "./commands/list";
 import { switchTo, switchInteractive } from "./commands/switch";
 import { init } from "./commands/init";
 import { create } from "./commands/create";
+import { testPerformance } from "./commands/test";
 
 const program = new Command();
 
@@ -13,7 +14,7 @@ program
   .description("Claude Code Switch - Git-based configuration management for ~/.claude\n\n" +
     "  Manage different Claude Code configurations using Git branches.\n" +
     "  Each branch can contain different settings, reducing token usage by 60-70%.")
-  .version("0.4.0")
+  .version("0.5.0")
   .addHelpText("after", `
 Examples:
   $ ccswitch init                  Initialize Git repository in ~/.claude
@@ -71,6 +72,14 @@ program
   .description("Create a new Git branch in ~/.claude")
   .action(async (branch: string) => {
     await create(branch);
+  });
+
+program
+  .command("test [branch]")
+  .description("Test configuration performance and token usage")
+  .option("-v, --verbose", "Show detailed output")
+  .action(async (branch?: string, options?: any) => {
+    await testPerformance({ branch, verbose: options?.verbose });
   });
 
 // Parse command line arguments
