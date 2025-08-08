@@ -1,0 +1,102 @@
+import simpleGit from "simple-git";
+import { homedir } from "os";
+import { join } from "path";
+
+// Constants
+const DEFAULT_CLAUDE_PATH = ".claude";
+
+/**
+ * Resolves a path string, expanding ~ to home directory
+ * @param path - The path to resolve
+ * @returns The resolved absolute path
+ */
+function resolvePath(path: string): string {
+  if (path.startsWith("~")) {
+    return path.replace("~", homedir());
+  }
+  return path;
+}
+
+/**
+ * Get the current Git branch name for the specified repository
+ * @param repoPath - Path to the Git repository (defaults to ~/.claude)
+ * @returns Promise<string> - The current branch name
+ * @throws Error if the path is not a Git repository
+ */
+export async function getCurrentBranch(repoPath?: string): Promise<string> {
+  const targetPath = repoPath || join(homedir(), DEFAULT_CLAUDE_PATH);
+  const resolvedPath = resolvePath(targetPath);
+
+  try {
+    const git = simpleGit(resolvedPath);
+    const branchInfo = await git.branch();
+    
+    if (!branchInfo.current) {
+      throw new Error("No current branch found (detached HEAD state?)");
+    }
+    
+    return branchInfo.current;
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Error(`Failed to get current branch: ${error.message}`);
+    }
+    throw new Error("Failed to get current branch: Unknown error");
+  }
+}
+
+/**
+ * Get list of all Git branches for the specified repository
+ * @param repoPath - Path to the Git repository (defaults to ~/.claude)
+ * @returns Promise<string[]> - Array of branch names
+ * @throws Error if the path is not a Git repository
+ */
+export async function getBranches(repoPath?: string): Promise<string[]> {
+  const targetPath = repoPath || join(homedir(), DEFAULT_CLAUDE_PATH);
+  const resolvedPath = resolvePath(targetPath);
+
+  try {
+    const git = simpleGit(resolvedPath);
+    const branchInfo = await git.branch();
+    
+    return branchInfo.all;
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Error(`Failed to get branches: ${error.message}`);
+    }
+    throw new Error("Failed to get branches: Unknown error");
+  }
+}
+
+/**
+ * Switch to a different Git branch
+ * @param branchName - Name of the branch to switch to
+ * @param repoPath - Path to the Git repository (defaults to ~/.claude)
+ * @returns Promise<void>
+ * @throws Error if the branch doesn't exist or checkout fails
+ */
+export async function switchBranch(branchName: string, repoPath?: string): Promise<void> {
+  const targetPath = repoPath || join(homedir(), DEFAULT_CLAUDE_PATH);
+  const resolvedPath = resolvePath(targetPath);
+
+  try {
+    const git = simpleGit(resolvedPath);
+    
+    // First, check if the branch exists
+    const branchInfo = await git.branch();
+    if (!branchInfo.all.includes(branchName)) {
+      throw new Error(`Branch '${branchName}' does not exist`);
+    }
+    
+    // Switch to the branch
+    await git.checkout(branchName);
+  } catch (error) {
+    if (error instanceof Error) {
+      // If it's already our custom error, just re-throw it
+      if (error.message.includes("does not exist")) {
+        throw error;
+      }
+      throw new Error(`Failed to switch branch: ${error.message}`);
+    }
+    throw new Error("Failed to switch branch: Unknown error");
+  }
+}

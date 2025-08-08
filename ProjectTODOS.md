@@ -14,21 +14,23 @@
 - [x] プロジェクト構造設計（src/, test/, docs/作成済み）
 - [x] 最小限の依存関係インストール（commander, simple-git, chalk）
 
-### v0.1.0 - 最小限のcurrent機能
+### v0.1.0 - 最小限のcurrent機能（✅ 完了）
 **目標**: currentコマンドのみ動作する最小バージョン
-- [ ] テスト環境の動作確認
-- [ ] getCurrentBranch関数のTDD実装
-- [ ] currentコマンドのTDD実装
-- [ ] CLIエントリーポイント作成
-- [ ] ローカル動作確認
+- [x] テスト環境の動作確認
+- [x] getCurrentBranch関数のTDD実装
+- [x] currentコマンドのTDD実装
+- [x] CLIエントリーポイント作成
+- [x] ローカル動作確認
 
-### v0.2.0 - 基本3コマンド
+### v0.2.0 - 基本3コマンド（✅ 完了）
 **目標**: switch, list, currentの基本動作
-- [ ] getBranches関数のTDD実装
-- [ ] switchBranch関数のTDD実装
-- [ ] listコマンドのTDD実装
-- [ ] switchコマンドのTDD実装（基本機能）
-- [ ] エラーハンドリング基礎
+- [x] ~/.claudeがGit管理されていない場合の親切なエラーメッセージ
+- [x] initコマンドへの誘導メッセージ
+- [x] getBranches関数のTDD実装
+- [x] switchBranch関数のTDD実装
+- [x] listコマンドのTDD実装
+- [x] switchコマンドのTDD実装（基本機能）
+- [x] エラーハンドリング基礎
 
 ### v0.3.0 - 設定管理とinit
 **目標**: ~/.claude管理の基本機能
@@ -93,14 +95,15 @@
 
 ## 🏃 現在の進捗
 
-### 現在のバージョン: v0.1.0 (開発中)
-**フォーカス**: currentコマンドのみ動作する最小バージョン
+### 現在のバージョン: v0.3.0 (準備中)
+**フォーカス**: ~/.claude管理の基本機能
 
-#### 今週の目標（v0.1.0）
-1. getCurrentBranch関数のTDD実装
-2. currentコマンドのTDD実装
-3. CLIエントリーポイント作成
-4. ローカル動作確認
+#### 次の目標（v0.3.0）
+1. initコマンドのTDD実装
+2. Git初期化機能
+3. 設定ファイル管理
+4. バックアップ機能（基本）
+5. createコマンド（ブランチ作成）
 
 #### 実装順序（TDD方式）
 1. **テスト環境構築** (STEP 1-3)
