@@ -31,16 +31,17 @@ describe("IDE module", () => {
   });
 
   describe("openInIDE", () => {
-    const originalEnv = process.env.NODE_ENV;
+    let originalEnv: string | undefined;
     
     beforeAll(() => {
-      // Set test environment to prevent actual IDE opening
+      // Store and set test environment to prevent actual IDE opening
+      originalEnv = process.env.NODE_ENV;
       process.env.NODE_ENV = 'test';
     });
     
     afterAll(() => {
       // Restore original environment
-      if (originalEnv) {
+      if (originalEnv !== undefined) {
         process.env.NODE_ENV = originalEnv;
       } else {
         delete process.env.NODE_ENV;
@@ -63,7 +64,8 @@ describe("IDE module", () => {
     test("should handle non-existent directory gracefully", async () => {
       const nonExistentDir = path.join(os.tmpdir(), `non-existent-${Date.now()}`);
       
-      // Should not throw error even if directory doesn't exist
+      // In test environment, should not throw error even if directory doesn't exist
+      // The function returns early when NODE_ENV === 'test'
       await openInIDE(nonExistentDir);
       expect(true).toBe(true);
     });

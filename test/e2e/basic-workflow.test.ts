@@ -39,6 +39,15 @@ describe("E2E: Basic Workflow", () => {
       `NODE_ENV=test HOME=${TEST_DIR} bun run ${CLI_PATH} init`
     );
     
+    // Debug output
+    if (!fs.existsSync(CLAUDE_DIR)) {
+      console.log("TEST_DIR:", TEST_DIR);
+      console.log("CLAUDE_DIR:", CLAUDE_DIR);
+      console.log("stdout:", stdout);
+      console.log("stderr:", stderr);
+      console.log("Directory contents:", fs.readdirSync(TEST_DIR));
+    }
+    
     // Wait for file system to sync
     await new Promise(resolve => setTimeout(resolve, 300));
     

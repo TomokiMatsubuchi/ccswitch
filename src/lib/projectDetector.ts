@@ -1,4 +1,4 @@
-import { existsSync, readdirSync } from "fs";
+import { existsSync, readdirSync, readFileSync } from "fs";
 import { join } from "path";
 
 export interface ProjectType {
@@ -213,7 +213,9 @@ export function detectProjectType(dirPath: string = process.cwd()): ProjectType 
   // Special case: Check for React/Vue in package.json
   if (bestMatch.type === "node" && existsSync(join(dirPath, "package.json"))) {
     try {
-      const packageJson = require(join(dirPath, "package.json"));
+      const packageJsonPath = join(dirPath, "package.json");
+      const packageJsonContent = readFileSync(packageJsonPath, 'utf8');
+      const packageJson = JSON.parse(packageJsonContent);
       const deps = { ...packageJson.dependencies, ...packageJson.devDependencies };
       
       if (deps.react || deps["react-dom"]) {
