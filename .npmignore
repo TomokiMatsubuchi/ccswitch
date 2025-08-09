@@ -1,0 +1,34 @@
+# Source files
+src/
+test/
+docs/
+
+# Configuration files
+tsconfig.json
+bunfig.toml
+.gitignore
+
+# Development files
+*.test.ts
+*.spec.ts
+ProjectTODOS.md
+CLAUDE.md
+PERFORMANCE.md
+PLATFORM_SUPPORT.md
+
+# Build artifacts
+.git/
+node_modules/
+coverage/
+*.log
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Local environment
+.env
+.env.local

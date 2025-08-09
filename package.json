@@ -1,18 +1,43 @@
 {
   "name": "ccswitch",
-  "version": "0.9.0",
+  "version": "0.10.0-rc.1",
   "description": "Claude Code configuration switcher - Git-based context management CLI",
-  "module": "index.ts",
+  "keywords": ["claude", "cli", "git", "configuration", "management", "ai", "development"],
+  "homepage": "https://github.com/TomokiMatsubuchi/ccswitch#readme",
+  "bugs": {
+    "url": "https://github.com/TomokiMatsubuchi/ccswitch/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TomokiMatsubuchi/ccswitch.git"
+  },
+  "license": "MIT",
+  "author": "Tomoki Matsubuchi",
+  "main": "./dist/cli.js",
+  "module": "./dist/cli.js",
   "type": "module",
-  "private": true,
+  "bin": {
+    "ccswitch": "./dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
+    "build": "bun build src/cli.ts --outdir dist --target node --format esm",
+    "dev": "bun run src/cli.ts",
     "test": "bun test test/unit",
     "test:all": "bun test test/unit && bun test test/e2e",
     "test:watch": "bun test --watch",
     "test:coverage": "bun test test/unit --coverage",
     "test:unit": "bun test test/unit",
     "test:e2e": "bun test test/e2e",
-    "dev": "bun run index.ts"
+    "lint": "tsc --noEmit",
+    "prepublishOnly": "bun run build && bun run test:all"
   },
   "dependencies": {
     "@inquirer/prompts": "^7.8.0",
