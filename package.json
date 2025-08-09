@@ -37,7 +37,7 @@
     "test:unit": "bun test test/unit",
     "test:e2e": "bun test test/e2e",
     "lint": "tsc --noEmit",
-    "prepublishOnly": "bun run build && bun run test:all"
+    "prepublishOnly": "bun run build && bun run test:unit"
   },
   "dependencies": {
     "@inquirer/prompts": "^7.8.1",

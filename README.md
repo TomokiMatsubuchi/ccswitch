@@ -392,18 +392,20 @@ bun run build
 ### Testing
 
 ```bash
-# Run all tests
+# Run all tests (local only)
 bun run test:all
 
 # Run unit tests
 bun run test:unit
 
-# Run E2E tests
+# Run E2E tests (local only - requires git)
 bun run test:e2e
 
 # Check coverage
 bun run test:coverage
 ```
+
+**Note**: E2E tests require actual git operations and file system access. They are skipped in CI environments and should be run locally before releasing.
 
 ### Contributing
 
