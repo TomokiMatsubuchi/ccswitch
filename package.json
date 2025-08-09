@@ -1,6 +1,6 @@
 {
   "name": "ccswitch",
-  "version": "0.10.0-rc.3",
+  "version": "0.10.0-rc.4",
   "description": "Claude Code configuration switcher - Git-based context management CLI",
   "keywords": ["claude", "cli", "git", "configuration", "management", "ai", "development"],
   "homepage": "https://github.com/TomokiMatsubuchi/ccswitch#readme",
