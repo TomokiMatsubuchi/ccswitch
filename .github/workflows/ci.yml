@@ -29,7 +29,14 @@ jobs:
       run: bun run lint
 
     - name: Run tests
-      run: bun run test:all
+      run: |
+        echo "Running unit tests sequentially..."
+        for test in test/unit/**/*.test.ts; do
+          echo "Testing: $test"
+          bun test "$test" || exit 1
+        done
+        echo "Running E2E tests..."
+        bun test test/e2e
 
     - name: Check test coverage
       run: bun run test:coverage
