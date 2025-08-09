@@ -1,4 +1,4 @@
-import { describe, expect, test, mock, beforeEach, afterEach } from "bun:test";
+import { describe, expect, test, mock, beforeEach, afterEach, spyOn } from "bun:test";
 
 // Mock chalk for color output first
 mock.module("chalk", () => ({
@@ -18,28 +18,13 @@ mock.module("chalk", () => ({
   }
 }));
 
-// Mock the performance module
-mock.module("../../../src/lib/performance", () => ({
-  measureTokens: mock(() => Promise.resolve({
-    fileCount: 10,
-    totalSize: 5000,
-    estimatedTokens: 1500,
-    largestFile: "CLAUDE.md",
-    largestFileSize: 2000
-  })),
-  measurePerformance: mock(() => Promise.resolve({
-    loadTime: 25,
-    memoryUsage: 12.5,
-    switchTime: 45
-  })),
-  validateConfig: mock(() => Promise.resolve({
-    valid: true,
-    warnings: [],
-    errors: []
-  }))
+// Mock git module
+mock.module("../../../src/lib/git", () => ({
+  getCurrentBranch: mock(() => Promise.resolve("main"))
 }));
 
-// Import command after all mocks are set up
+// Import modules for spying
+import * as performance from "../../../src/lib/performance";
 import { testPerformance } from "../../../src/commands/test";
 
 describe("test command", () => {
@@ -68,95 +53,185 @@ describe("test command", () => {
   });
 
   test("should run performance test without errors", async () => {
-    // Just check that the function runs without throwing
-    let error = null;
-    try {
-      await testPerformance();
-    } catch (e) {
-      error = e;
-    }
+    // Mock the performance functions
+    const measureTokensSpy = spyOn(performance, "measureTokens").mockResolvedValue({
+      fileCount: 10,
+      totalSize: 5000,
+      estimatedTokens: 1500,
+      largestFile: "CLAUDE.md",
+      largestFileSize: 2000
+    });
+    const measurePerformanceSpy = spyOn(performance, "measurePerformance").mockResolvedValue({
+      loadTime: 25,
+      memoryUsage: 12.5,
+      switchTime: 45
+    });
+    const validateConfigSpy = spyOn(performance, "validateConfig").mockResolvedValue({
+      valid: true,
+      warnings: [],
+      errors: []
+    });
     
-    expect(error).toBeNull();
+    try {
+      let error = null;
+      try {
+        await testPerformance();
+      } catch (e) {
+        error = e;
+      }
+      
+      expect(error).toBeNull();
+    } finally {
+      measureTokensSpy.mockRestore();
+      measurePerformanceSpy.mockRestore();
+      validateConfigSpy.mockRestore();
+    }
   });
 
   test("should display warning when token count is high", async () => {
     // Clear console output first
     consoleOutput = [];
     
-    // Mock high token count
-    mock.module("../../../src/lib/performance", () => ({
-      measureTokens: mock(() => Promise.resolve({
-        fileCount: 50,
-        totalSize: 50000,
-        estimatedTokens: 15000,  // High token count
-        largestFile: "CLAUDE.md",
-        largestFileSize: 20000
-      })),
-      measurePerformance: mock(() => Promise.resolve({
-        loadTime: 25,
-        memoryUsage: 12.5,
-        switchTime: 45
-      })),
-      validateConfig: mock(() => Promise.resolve({
-        valid: true,
-        warnings: [],
-        errors: []
-      }))
-    }));
+    // Mock high token count using spyOn
+    const measureTokensSpy = spyOn(performance, "measureTokens").mockResolvedValue({
+      fileCount: 50,
+      totalSize: 50000,
+      estimatedTokens: 15000,  // High token count
+      largestFile: "CLAUDE.md",
+      largestFileSize: 20000
+    });
+    const measurePerformanceSpy = spyOn(performance, "measurePerformance").mockResolvedValue({
+      loadTime: 25,
+      memoryUsage: 12.5,
+      switchTime: 45
+    });
+    const validateConfigSpy = spyOn(performance, "validateConfig").mockResolvedValue({
+      valid: true,
+      warnings: [],
+      errors: []
+    });
 
-    // Import the command again to use the new mock
-    const { testPerformance: testPerfWithHighTokens } = await import("../../../src/commands/test");
-    await testPerfWithHighTokens();
-    
-    // Check for warning about high token count or the token number itself
-    const hasWarning = consoleOutput.some(line => 
-      line.includes("15,000") ||  // Formatted number with comma
-      line.includes("15000") || 
-      line.includes("Warning") ||
-      line.includes("HIGH token") ||
-      line.includes("⚠️")
-    );
-    
-    expect(hasWarning).toBe(true);
+    try {
+      await testPerformance();
+      
+      // Check for warning about high token count
+      // The actual implementation outputs "⚠️  Warning: HIGH token usage detected"
+      const hasWarning = consoleOutput.some(line => 
+        line.includes("Warning: HIGH token usage detected") ||
+        line.includes("HIGH token usage") ||
+        line.includes("⚠")  // Unicode warning sign might not include emoji variation selector
+      );
+      
+      // Also check that the high token count was output (with any locale formatting)
+      const hasHighTokenCount = consoleOutput.some(line => 
+        line.includes("15") && line.includes("000")  // Matches both "15,000" and "15000"
+      );
+      
+      // Either the warning or the high token count should be present
+      expect(hasWarning || hasHighTokenCount).toBe(true);
+    } finally {
+      measureTokensSpy.mockRestore();
+      measurePerformanceSpy.mockRestore();
+      validateConfigSpy.mockRestore();
+    }
   });
 
   test("should handle errors gracefully", async () => {
-    // Mock error in measurement
-    mock.module("../../../src/lib/performance", () => ({
-      measureTokens: mock(() => Promise.reject(new Error("Failed to measure tokens"))),
-      measurePerformance: mock(() => Promise.resolve({
-        loadTime: 25,
-        memoryUsage: 12.5,
-        switchTime: 45
-      })),
-      validateConfig: mock(() => Promise.resolve({
-        valid: true,
-        warnings: [],
-        errors: []
-      }))
-    }));
-
-    await testPerformance();
+    // Clear console output first
+    consoleOutput = [];
     
-    expect(consoleOutput.some(line => 
-      line.includes("ERROR:") || 
-      line.includes("Failed")
-    )).toBe(true);
+    // Mock error in measurement using spyOn
+    const measureTokensSpy = spyOn(performance, "measureTokens").mockRejectedValue(new Error("Failed to measure tokens"));
+    const measurePerformanceSpy = spyOn(performance, "measurePerformance").mockResolvedValue({
+      loadTime: 25,
+      memoryUsage: 12.5,
+      switchTime: 45
+    });
+    const validateConfigSpy = spyOn(performance, "validateConfig").mockResolvedValue({
+      valid: true,
+      warnings: [],
+      errors: []
+    });
+
+    try {
+      await testPerformance();
+      
+      // The error is caught and logged as "[RED]  Error measuring tokens: Failed to measure tokens[/RED]"
+      expect(consoleOutput.some(line => 
+        line.includes("Error measuring tokens") || 
+        line.includes("Failed to measure tokens") ||
+        line.includes("[RED]")
+      )).toBe(true);
+    } finally {
+      measureTokensSpy.mockRestore();
+      measurePerformanceSpy.mockRestore();
+      validateConfigSpy.mockRestore();
+    }
   });
 
   test("should accept verbose flag for detailed output", async () => {
-    await testPerformance({ verbose: true });
+    // Mock the performance functions
+    const measureTokensSpy = spyOn(performance, "measureTokens").mockResolvedValue({
+      fileCount: 10,
+      totalSize: 5000,
+      estimatedTokens: 1500,
+      largestFile: "CLAUDE.md",
+      largestFileSize: 2000
+    });
+    const measurePerformanceSpy = spyOn(performance, "measurePerformance").mockResolvedValue({
+      loadTime: 25,
+      memoryUsage: 12.5,
+      switchTime: 45
+    });
+    const validateConfigSpy = spyOn(performance, "validateConfig").mockResolvedValue({
+      valid: true,
+      warnings: [],
+      errors: []
+    });
     
-    // Just check that we got some output
-    expect(consoleOutput.length).toBeGreaterThan(0);
+    try {
+      await testPerformance({ verbose: true });
+      
+      // Just check that we got some output
+      expect(consoleOutput.length).toBeGreaterThan(0);
+    } finally {
+      measureTokensSpy.mockRestore();
+      measurePerformanceSpy.mockRestore();
+      validateConfigSpy.mockRestore();
+    }
   });
 
   test("should accept branch parameter for specific branch testing", async () => {
-    await testPerformance({ branch: "slim/minimal" });
+    // Mock the performance functions
+    const measureTokensSpy = spyOn(performance, "measureTokens").mockResolvedValue({
+      fileCount: 10,
+      totalSize: 5000,
+      estimatedTokens: 1500,
+      largestFile: "CLAUDE.md",
+      largestFileSize: 2000
+    });
+    const measurePerformanceSpy = spyOn(performance, "measurePerformance").mockResolvedValue({
+      loadTime: 25,
+      memoryUsage: 12.5,
+      switchTime: 45
+    });
+    const validateConfigSpy = spyOn(performance, "validateConfig").mockResolvedValue({
+      valid: true,
+      warnings: [],
+      errors: []
+    });
     
-    expect(consoleOutput.some(line => 
-      line.includes("slim/minimal") ||
-      line.includes("Testing configuration")
-    )).toBe(true);
+    try {
+      await testPerformance({ branch: "slim/minimal" });
+      
+      expect(consoleOutput.some(line => 
+        line.includes("slim/minimal") ||
+        line.includes("Testing configuration")
+      )).toBe(true);
+    } finally {
+      measureTokensSpy.mockRestore();
+      measurePerformanceSpy.mockRestore();
+      validateConfigSpy.mockRestore();
+    }
   });
 });

@@ -31,7 +31,18 @@ jobs:
     - name: Run tests
       run: |
         echo "Running unit tests sequentially..."
-        for test in test/unit/**/*.test.ts; do
+        # Run tests in commands directory
+        for test in test/unit/commands/*.test.ts; do
+          echo "Testing: $test"
+          bun test "$test" || exit 1
+        done
+        # Run tests in lib directory
+        for test in test/unit/lib/*.test.ts; do
+          echo "Testing: $test"
+          bun test "$test" || exit 1
+        done
+        # Run tests in root unit directory
+        for test in test/unit/*.test.ts; do
           echo "Testing: $test"
           bun test "$test" || exit 1
         done
