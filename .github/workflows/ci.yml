@@ -11,7 +11,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-22.04, macos-latest]
         node-version: [18.x, 20.x]
 
     steps:
@@ -20,7 +20,7 @@ jobs:
     - name: Setup Bun
       uses: oven-sh/setup-bun@v1
       with:
-        bun-version: latest
+        bun-version: 1.2.19
 
     - name: Install dependencies
       run: bun install
@@ -38,7 +38,7 @@ jobs:
       run: bun run build
 
   security:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     continue-on-error: true  # Low severity vulnerabilities won't block CI
     steps:
     - uses: actions/checkout@v4
@@ -46,7 +46,7 @@ jobs:
     - name: Setup Bun
       uses: oven-sh/setup-bun@v1
       with:
-        bun-version: latest
+        bun-version: 1.2.19
 
     - name: Install dependencies
       run: bun install

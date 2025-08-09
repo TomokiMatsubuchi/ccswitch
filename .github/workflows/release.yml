@@ -7,7 +7,7 @@ on:
 
 jobs:
   release:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     permissions:
       contents: write
       packages: write
@@ -18,7 +18,7 @@ jobs:
     - name: Setup Bun
       uses: oven-sh/setup-bun@v1
       with:
-        bun-version: latest
+        bun-version: 1.2.19
 
     - name: Setup Node.js
       uses: actions/setup-node@v4
