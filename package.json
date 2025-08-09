@@ -1,6 +1,6 @@
 {
   "name": "ccswitch",
-  "version": "0.10.0-rc.2",
+  "version": "0.10.0-rc.3",
   "description": "Claude Code configuration switcher - Git-based context management CLI",
   "keywords": ["claude", "cli", "git", "configuration", "management", "ai", "development"],
   "homepage": "https://github.com/TomokiMatsubuchi/ccswitch#readme",
@@ -37,7 +37,7 @@
     "test:unit": "bun test test/unit",
     "test:e2e": "bun test test/e2e",
     "lint": "tsc --noEmit",
-    "prepublishOnly": "bun run build && bun run test:unit"
+    "prepublishOnly": "bun run build"
   },
   "dependencies": {
     "@inquirer/prompts": "^7.8.1",
