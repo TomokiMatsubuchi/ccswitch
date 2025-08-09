@@ -1,12 +1,6 @@
 import chalk from "chalk";
 import { select } from "@inquirer/prompts";
 import { switchBranch, getCurrentBranch, getBranches } from "../lib/git";
-import { ConfigLoader } from "../lib/configLoader";
-import { PresetManager } from "../lib/preset";
-import { HookManager } from "../lib/hookManager";
-import type { HookContext } from "../types/config";
-import * as path from "path";
-import * as os from "os";
 
 /**
  * Switch to a different Git branch in ~/.claude interactively
@@ -60,63 +54,20 @@ export async function switchInteractive(): Promise<void> {
  */
 export async function switchTo(branchName: string): Promise<void> {
   try {
-    // 設定ファイルを読み込む
-    const configLoader = new ConfigLoader();
-    const config = configLoader.loadConfig();
-    const presetManager = new PresetManager();
-    
-    // エイリアスを解決
-    let targetBranch = configLoader.resolveAlias(branchName, config);
-    
-    // プリセット名の場合はブランチ名に変換
-    const preset = presetManager.getPreset(targetBranch, config);
-    if (preset) {
-      targetBranch = preset.branch;
-      console.log(chalk.gray(`Using preset '${branchName}' -> ${targetBranch}`));
-    }
-    
     // Get current branch before switching
     const previousBranch = await getCurrentBranch();
     
     // Check if already on the target branch
-    if (previousBranch === targetBranch) {
-      console.log(chalk.yellow(`Already on branch '${targetBranch}'`));
+    if (previousBranch === branchName) {
+      console.log(chalk.yellow(`Already on branch '${branchName}'`));
       return;
     }
     
-    // HookManagerのインスタンスを作成
-    const hookManager = new HookManager();
-    
-    // フック実行コンテキストを準備
-    const hookContext: HookContext = {
-      command: "switch",
-      fromBranch: previousBranch,
-      toBranch: targetBranch,
-      projectRoot: process.cwd(),
-      claudeDir: path.join(os.homedir(), ".claude"),
-      timestamp: new Date()
-    };
-    
-    // pre-switchフックを実行
-    if (config.hooks && hookManager.shouldExecuteHook('preSwitch', config.hooks)) {
-      const success = await hookManager.executePreSwitchHook(config.hooks, hookContext);
-      if (!success) {
-        console.error(chalk.red("Pre-switch hook failed. Aborting switch."));
-        return;
-      }
-    }
-    
     // Switch to the new branch
-    await switchBranch(targetBranch);
-    
-    // post-switchフックを実行
-    if (config.hooks && hookManager.shouldExecuteHook('postSwitch', config.hooks)) {
-      await hookManager.executePostSwitchHook(config.hooks, hookContext);
-      // post-switchフックの失敗は切り替え自体には影響しない
-    }
+    await switchBranch(branchName);
     
     console.log(chalk.gray(`Previous branch: ${previousBranch}`));
-    console.log(`${chalk.green("Switched to branch:")} ${chalk.cyan(targetBranch)}`);
+    console.log(`${chalk.green("Switched to branch:")} ${chalk.cyan(branchName)}`);
   } catch (error) {
     if (error instanceof Error) {
       // Check if it's a "not a git repository" error

@@ -10,26 +10,17 @@ mock.module("../../../src/lib/git", () => ({
   getCurrentBranch: mockGetCurrentBranch
 }));
 
-// Mock ConfigLoader
-mock.module("../../../src/lib/configLoader", () => ({
-  ConfigLoader: class {
-    loadConfig() {
-      return {
-        version: "1",
-        defaultBranch: "main",
-        hooks: {}
-      };
-    }
-  }
+// Mock the IDE module
+const mockOpenInIDE = mock(() => Promise.resolve());
+const mockDetectIDE = mock(() => Promise.resolve("code"));
+const mockGetIDEDisplayName = mock((cmd: string) => cmd === "code" ? "VS Code" : cmd);
+
+mock.module("../../../src/lib/ide", () => ({
+  openInIDE: mockOpenInIDE,
+  detectIDE: mockDetectIDE,
+  getIDEDisplayName: mockGetIDEDisplayName
 }));
 
-// Mock HookManager
-mock.module("../../../src/lib/hookManager", () => ({
-  HookManager: class {
-    shouldExecuteHook() { return false; }
-    executeHook() { return Promise.resolve(true); }
-  }
-}));
 
 // Mock chalk for color output
 mock.module("chalk", () => ({
@@ -55,6 +46,11 @@ describe("create command", () => {
     console.error = (...args: any[]) => {
       consoleOutput.push(`ERROR: ${args.join(" ")}`);
     };
+    // Reset mocks
+    mockCreateBranch.mockClear();
+    mockCreateBranch.mockResolvedValue(true);
+    mockDetectIDE.mockClear();
+    mockOpenInIDE.mockClear();
   });
 
   afterEach(() => {
@@ -114,4 +110,5 @@ describe("create command", () => {
     expect(consoleOutput[0]).toContain("~/.claude is not a Git repository");
     expect(consoleOutput[1]).toContain("ccswitch init");
   });
+
 });

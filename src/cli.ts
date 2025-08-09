@@ -7,6 +7,7 @@ import { init } from "./commands/init";
 import { create } from "./commands/create";
 import { testPerformance } from "./commands/test";
 import { auto } from "./commands/auto";
+import { edit } from "./commands/edit";
 
 const program = new Command();
 
@@ -15,7 +16,7 @@ program
   .description("Claude Code Switch - Git-based configuration management for ~/.claude\n\n" +
     "  Manage different Claude Code configurations using Git branches.\n" +
     "  Each branch can contain different settings, reducing token usage by 60-70%.")
-  .version("0.7.0")
+  .version("0.8.5")
   .addHelpText("after", `
 Examples:
   $ ccswitch init                  Initialize Git repository in ~/.claude
@@ -71,8 +72,9 @@ program
   .command("create <branch>")
   .alias("new")
   .description("Create a new Git branch in ~/.claude")
-  .action(async (branch: string) => {
-    await create(branch);
+  .option("--no-edit", "Do not open IDE after creating branch")
+  .action(async (branch: string, options: any) => {
+    await create(branch, { openInIDE: options.edit !== false });
   });
 
 program
@@ -95,6 +97,13 @@ program
       yes: options.yes,
       dryRun: options.dryRun
     });
+  });
+
+program
+  .command("edit [branch]")
+  .description("Open ~/.claude directory in your IDE (VS Code, Cursor, etc.). Optionally switch to a branch first")
+  .action(async (branch?: string) => {
+    await edit(branch);
   });
 
 // Parse command line arguments

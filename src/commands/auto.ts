@@ -2,8 +2,6 @@ import chalk from "chalk";
 import { select, confirm } from "@inquirer/prompts";
 import { detectProjectType, getProjectFiles } from "../lib/projectDetector";
 import { getCurrentBranch, getBranches, switchBranch } from "../lib/git";
-import { ConfigLoader } from "../lib/configLoader";
-import { PresetManager } from "../lib/preset";
 
 interface AutoOptions {
   verbose?: boolean;
@@ -20,20 +18,9 @@ export async function auto(options: AutoOptions = {}): Promise<void> {
     console.log(chalk.cyan("🔍 Analyzing project..."));
     console.log();
     
-    // 設定ファイルを読み込む
-    const configLoader = new ConfigLoader();
-    const config = configLoader.loadConfig();
-    const presetManager = new PresetManager();
-    
     // Detect project type
     const detection = detectProjectType();
     const currentBranch = await getCurrentBranch();
-    
-    // 自動切り替えが無効の場合は警告
-    if (config.autoSwitch && !config.autoSwitch.enabled) {
-      console.log(chalk.yellow("⚠️  Auto-switch is disabled in configuration"));
-      console.log(chalk.gray("Enable it in .ccswitchrc to use automatic switching"));
-    }
     
     if (detection.type === "unknown" || detection.confidence < 0.3) {
       console.log(chalk.yellow("⚠️  Could not determine project type with confidence"));
@@ -76,24 +63,8 @@ export async function auto(options: AutoOptions = {}): Promise<void> {
     
     console.log();
     
-    // プリセットから推奨ブランチを取得
+    // Get suggested branch
     let suggestedBranch = detection.suggestedBranch;
-    
-    // プロジェクトタイプに対応するプリセットを検索
-    const preset = presetManager.getPresetByProjectType(detection.type, config);
-    if (preset) {
-      suggestedBranch = preset.branch;
-      console.log(chalk.gray(`Using preset '${preset.name}' for ${detection.type} project`));
-    }
-    
-    // 設定のautoSwitchルールも確認
-    if (config.autoSwitch?.rules) {
-      const rule = config.autoSwitch.rules.find(r => r.projectType === detection.type);
-      if (rule) {
-        suggestedBranch = rule.branch;
-        console.log(chalk.gray(`Using auto-switch rule for ${detection.type} project`));
-      }
-    }
     
     // Check if suggested branch exists
     if (suggestedBranch) {

@@ -1,10 +1,8 @@
 import chalk from "chalk";
-import { createBranch, getCurrentBranch } from "../lib/git";
-import { ConfigLoader } from "../lib/configLoader";
-import { HookManager } from "../lib/hookManager";
-import type { HookContext } from "../types/config";
-import * as path from "path";
+import { createBranch } from "../lib/git";
+import { openInIDE, detectIDE, getIDEDisplayName } from "../lib/ide";
 import * as os from "os";
+import * as path from "path";
 
 /**
  * Validate branch name format
@@ -17,11 +15,16 @@ function isValidBranchName(branchName: string): boolean {
   return validPattern.test(branchName);
 }
 
+interface CreateOptions {
+  openInIDE?: boolean;
+}
+
 /**
  * Create a new Git branch in ~/.claude
  * @param branchName - Name of the branch to create
+ * @param options - Options for the create command
  */
-export async function create(branchName: string): Promise<void> {
+export async function create(branchName: string, options: CreateOptions = {}): Promise<void> {
   try {
     // Validate branch name
     if (!isValidBranchName(branchName)) {
@@ -31,45 +34,31 @@ export async function create(branchName: string): Promise<void> {
       return;
     }
 
-    // 設定ファイルを読み込む
-    const configLoader = new ConfigLoader();
-    const config = configLoader.loadConfig();
-    const hookManager = new HookManager();
-    
-    // 現在のブランチを取得
-    const fromBranch = await getCurrentBranch();
-    
-    // フック実行コンテキストを準備
-    const hookContext: HookContext = {
-      command: "create",
-      fromBranch: fromBranch,
-      toBranch: branchName,
-      projectRoot: process.cwd(),
-      claudeDir: path.join(os.homedir(), ".claude"),
-      timestamp: new Date()
-    };
-    
-    // pre-createフックを実行
-    if (config.hooks && hookManager.shouldExecuteHook('preCreate', config.hooks)) {
-      const success = await hookManager.executeHook('preCreate', config.hooks, hookContext);
-      if (!success) {
-        console.error(chalk.red("Pre-create hook failed. Aborting branch creation."));
-        return;
-      }
-    }
-
     // Create the branch
     await createBranch(branchName);
-    
-    // post-createフックを実行
-    if (config.hooks && hookManager.shouldExecuteHook('postCreate', config.hooks)) {
-      await hookManager.executeHook('postCreate', config.hooks, hookContext);
-      // post-createフックの失敗は作成自体には影響しない
-    }
     
     console.log(`${chalk.green("✓")} Created branch: ${chalk.cyan(branchName)}`);
     console.log(chalk.gray(`Switched to branch '${branchName}'`));
     console.log();
+    
+    // Open in IDE if requested (default is true)
+    if (options.openInIDE !== false) {
+      try {
+        const claudeDir = path.join(os.homedir(), ".claude");
+        const ide = await detectIDE();
+        
+        if (ide) {
+          console.log(chalk.cyan(`Opening ~/.claude in ${getIDEDisplayName(ide)}...`));
+          await openInIDE(claudeDir);
+          console.log(chalk.green("✓") + " Opened ~/.claude in your IDE");
+        } else {
+          console.log(chalk.yellow("No IDE found. You can manually open ~/.claude to edit your configuration."));
+        }
+      } catch (ideError) {
+        // Don't fail the entire command if IDE opening fails
+        console.log(chalk.yellow("Could not open IDE automatically. You can manually open ~/.claude to edit your configuration."));
+      }
+    }
     
     // Show suggested naming conventions if not following them
     if (!branchName.includes("/")) {
