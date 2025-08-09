@@ -65,7 +65,7 @@ describe("E2E: Edit Command", () => {
 
   test("edit command with non-existent branch should fail", async () => {
     // The command should succeed (exit code 0) but print an error message
-    const result = await exec(`NODE_ENV=test HOME=${TEST_DIR} bun run ${CLI_PATH} edit non-existent-branch 2>&1`).catch(err => err);
+    const result = await exec(`NODE_ENV=test HOME=${TEST_DIR} bun run ${CLI_PATH} edit non-existent-branch 2>&1`).catch((err: any) => err);
     const output = result.stdout || result.message || "";
     
     // Should contain error message about branch not existing

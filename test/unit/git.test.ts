@@ -1,6 +1,6 @@
 import { describe, expect, test, beforeEach, mock } from "bun:test";
 import { getCurrentBranch } from "../../src/lib/git";
-import simpleGit, { SimpleGit } from "simple-git";
+import simpleGit, { type SimpleGit } from "simple-git";
 
 // Mock simple-git
 mock.module("simple-git", () => ({

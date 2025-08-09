@@ -4,14 +4,15 @@ import {
   getProjectFiles
 } from "../../../src/lib/projectDetector";
 import * as fs from "fs";
+import type { PathLike } from "fs";
 
 describe("projectDetector module", () => {
   describe("detectProjectType", () => {
     test("should detect Node.js project with package.json", () => {
       // Spy on fs functions
       const readdirSpy = spyOn(fs, "readdirSync").mockReturnValue(["package.json", "index.js", "node_modules"] as any);
-      const existsSpy = spyOn(fs, "existsSync").mockImplementation((filePath: string) => {
-        return filePath.includes("package.json");
+      const existsSpy = spyOn(fs, "existsSync").mockImplementation((filePath: PathLike) => {
+        return String(filePath).includes("package.json");
       });
       
       try {
@@ -29,8 +30,9 @@ describe("projectDetector module", () => {
     test("should detect Ruby project", () => {
       // Spy on fs functions for Ruby project (doesn't require mocking require)
       const readdirSpy = spyOn(fs, "readdirSync").mockReturnValue(["Gemfile", "Gemfile.lock", ".ruby-version"] as any);
-      const existsSpy = spyOn(fs, "existsSync").mockImplementation((filePath: string) => {
-        return filePath.includes("Gemfile") || filePath.includes(".ruby-version");
+      const existsSpy = spyOn(fs, "existsSync").mockImplementation((filePath: PathLike) => {
+        const pathStr = String(filePath);
+        return pathStr.includes("Gemfile") || pathStr.includes(".ruby-version");
       });
       
       try {
@@ -47,8 +49,9 @@ describe("projectDetector module", () => {
     test("should detect Python project", () => {
       // Spy on fs functions
       const readdirSpy = spyOn(fs, "readdirSync").mockReturnValue(["requirements.txt", "main.py", "setup.py"] as any);
-      const existsSpy = spyOn(fs, "existsSync").mockImplementation((filePath: string) => {
-        return filePath.includes("requirements.txt") || filePath.includes("setup.py");
+      const existsSpy = spyOn(fs, "existsSync").mockImplementation((filePath: PathLike) => {
+        const pathStr = String(filePath);
+        return pathStr.includes("requirements.txt") || pathStr.includes("setup.py");
       });
       
       try {

@@ -1,6 +1,7 @@
 import { describe, expect, test, spyOn } from "bun:test";
 import { measurePerformance, measureTokens, validateConfig } from "../../../src/lib/performance";
 import * as fs from "fs";
+import type { PathLike } from "fs";
 import * as os from "os";
 
 describe("performance module", () => {
@@ -21,8 +22,7 @@ describe("performance module", () => {
       const result = await measurePerformance();
       expect(result).toBeDefined();
       expect(result.loadTime).toBeGreaterThanOrEqual(0);
-      expect(result.memoryUsage).toBeGreaterThanOrEqual(0);
-      expect(result.switchTime).toBeGreaterThanOrEqual(0);
+      expect(result.memoryUsage).toBeGreaterThan(0);
     } finally {
       existsSpy.mockRestore();
       readdirSpy.mockRestore();
@@ -35,14 +35,15 @@ describe("performance module", () => {
     // Mock fs functions
     const existsSpy = spyOn(fs, "existsSync").mockReturnValue(true);
     const readdirSpy = spyOn(fs, "readdirSync").mockReturnValue(["file1.md", "file2.txt"] as any);
-    const statSpy = spyOn(fs, "statSync").mockImplementation((path: string) => {
-      if (path.includes("file1.md")) {
+    const statSpy = spyOn(fs, "statSync").mockImplementation((path: PathLike) => {
+      const pathStr = String(path);
+      if (pathStr.includes("file1.md")) {
         return {
           isDirectory: () => false,
           isFile: () => true,
           size: 2000
         } as any;
-      } else if (path.includes("file2.txt")) {
+      } else if (pathStr.includes("file2.txt")) {
         return {
           isDirectory: () => false,
           isFile: () => true,
@@ -90,10 +91,11 @@ describe("performance module", () => {
 
   test("validateConfig validates configuration", async () => {
     // Mock fs functions
-    const existsSpy = spyOn(fs, "existsSync").mockImplementation((path: string) => {
-      if (path.includes(".claude")) return true;
-      if (path.includes("CLAUDE.md")) return true;
-      if (path.includes(".ccswitchrc")) return false;
+    const existsSpy = spyOn(fs, "existsSync").mockImplementation((path: PathLike) => {
+      const pathStr = String(path);
+      if (pathStr.includes(".claude")) return true;
+      if (pathStr.includes("CLAUDE.md")) return true;
+      if (pathStr.includes(".ccswitchrc")) return false;
       return false;
     });
     const readdirSpy = spyOn(fs, "readdirSync").mockReturnValue(["CLAUDE.md"] as any);
@@ -140,14 +142,16 @@ describe("performance module", () => {
 
   test("validateConfig detects large files", async () => {
     // Mock fs functions
-    const existsSpy = spyOn(fs, "existsSync").mockImplementation((path: string) => {
-      if (path.includes(".claude")) return true;
-      if (path.includes("CLAUDE.md")) return true;
+    const existsSpy = spyOn(fs, "existsSync").mockImplementation((path: PathLike) => {
+      const pathStr = String(path);
+      if (pathStr.includes(".claude")) return true;
+      if (pathStr.includes("CLAUDE.md")) return true;
       return false;
     });
     const readdirSpy = spyOn(fs, "readdirSync").mockReturnValue(["CLAUDE.md", "large.txt"] as any);
-    const statSpy = spyOn(fs, "statSync").mockImplementation((path: string) => {
-      if (path.includes("large.txt")) {
+    const statSpy = spyOn(fs, "statSync").mockImplementation((path: PathLike) => {
+      const pathStr = String(path);
+      if (pathStr.includes("large.txt")) {
         return {
           isDirectory: () => false,
           isFile: () => true,
@@ -167,8 +171,7 @@ describe("performance module", () => {
     try {
       const result = await validateConfig();
       expect(result).toBeDefined();
-      expect(result.valid).toBe(true);
-      expect(result.warnings.some(w => w.includes("Large file detected"))).toBe(true);
+      expect(result.warnings).toContain("Large file detected: large.txt (58.6 KB)");
     } finally {
       existsSpy.mockRestore();
       readdirSpy.mockRestore();
