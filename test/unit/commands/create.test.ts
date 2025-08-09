@@ -3,9 +3,32 @@ import { create } from "../../../src/commands/create";
 
 // Mock the git module
 const mockCreateBranch = mock(() => Promise.resolve(true));
+const mockGetCurrentBranch = mock(() => Promise.resolve("main"));
 
 mock.module("../../../src/lib/git", () => ({
-  createBranch: mockCreateBranch
+  createBranch: mockCreateBranch,
+  getCurrentBranch: mockGetCurrentBranch
+}));
+
+// Mock ConfigLoader
+mock.module("../../../src/lib/configLoader", () => ({
+  ConfigLoader: class {
+    loadConfig() {
+      return {
+        version: "1",
+        defaultBranch: "main",
+        hooks: {}
+      };
+    }
+  }
+}));
+
+// Mock HookManager
+mock.module("../../../src/lib/hookManager", () => ({
+  HookManager: class {
+    shouldExecuteHook() { return false; }
+    executeHook() { return Promise.resolve(true); }
+  }
 }));
 
 // Mock chalk for color output

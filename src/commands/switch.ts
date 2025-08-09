@@ -3,6 +3,10 @@ import { select } from "@inquirer/prompts";
 import { switchBranch, getCurrentBranch, getBranches } from "../lib/git";
 import { ConfigLoader } from "../lib/configLoader";
 import { PresetManager } from "../lib/preset";
+import { HookManager } from "../lib/hookManager";
+import type { HookContext } from "../types/config";
+import * as path from "path";
+import * as os from "os";
 
 /**
  * Switch to a different Git branch in ~/.claude interactively
@@ -80,31 +84,35 @@ export async function switchTo(branchName: string): Promise<void> {
       return;
     }
     
-    // フック実行（pre-switch）
-    if (config.hooks?.preSwitch) {
-      console.log(chalk.gray("Running pre-switch hook..."));
-      const { exec } = await import("child_process");
-      await new Promise((resolve, reject) => {
-        exec(config.hooks.preSwitch!, (error) => {
-          if (error) reject(error);
-          else resolve(undefined);
-        });
-      });
+    // HookManagerのインスタンスを作成
+    const hookManager = new HookManager();
+    
+    // フック実行コンテキストを準備
+    const hookContext: HookContext = {
+      command: "switch",
+      fromBranch: previousBranch,
+      toBranch: targetBranch,
+      projectRoot: process.cwd(),
+      claudeDir: path.join(os.homedir(), ".claude"),
+      timestamp: new Date()
+    };
+    
+    // pre-switchフックを実行
+    if (config.hooks && hookManager.shouldExecuteHook('preSwitch', config.hooks)) {
+      const success = await hookManager.executePreSwitchHook(config.hooks, hookContext);
+      if (!success) {
+        console.error(chalk.red("Pre-switch hook failed. Aborting switch."));
+        return;
+      }
     }
     
     // Switch to the new branch
     await switchBranch(targetBranch);
     
-    // フック実行（post-switch）
-    if (config.hooks?.postSwitch) {
-      console.log(chalk.gray("Running post-switch hook..."));
-      const { exec } = await import("child_process");
-      await new Promise((resolve, reject) => {
-        exec(config.hooks.postSwitch!, (error) => {
-          if (error) reject(error);
-          else resolve(undefined);
-        });
-      });
+    // post-switchフックを実行
+    if (config.hooks && hookManager.shouldExecuteHook('postSwitch', config.hooks)) {
+      await hookManager.executePostSwitchHook(config.hooks, hookContext);
+      // post-switchフックの失敗は切り替え自体には影響しない
     }
     
     console.log(chalk.gray(`Previous branch: ${previousBranch}`));

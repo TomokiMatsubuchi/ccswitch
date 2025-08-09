@@ -16,10 +16,28 @@ export interface Preset {
  * フック設定
  */
 export interface Hooks {
-  preSwitch?: string;
-  postSwitch?: string;
-  preCreate?: string;
-  postCreate?: string;
+  preSwitch?: string | string[];
+  postSwitch?: string | string[];
+  preCreate?: string | string[];
+  postCreate?: string | string[];
+  // 追加のフックタイミング
+  preInit?: string | string[];
+  postInit?: string | string[];
+  preBackup?: string | string[];
+  postBackup?: string | string[];
+}
+
+/**
+ * フック実行コンテキスト
+ */
+export interface HookContext {
+  command: string;         // 実行中のコマンド名
+  fromBranch?: string;     // 切り替え元ブランチ
+  toBranch?: string;       // 切り替え先ブランチ
+  projectRoot: string;     // プロジェクトルートパス
+  claudeDir: string;       // Claudeディレクトリパス
+  timestamp: Date;         // 実行時刻
+  environment?: Record<string, string>;  // 環境変数
 }
 
 /**

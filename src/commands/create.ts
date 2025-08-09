@@ -1,5 +1,10 @@
 import chalk from "chalk";
-import { createBranch } from "../lib/git";
+import { createBranch, getCurrentBranch } from "../lib/git";
+import { ConfigLoader } from "../lib/configLoader";
+import { HookManager } from "../lib/hookManager";
+import type { HookContext } from "../types/config";
+import * as path from "path";
+import * as os from "os";
 
 /**
  * Validate branch name format
@@ -26,8 +31,41 @@ export async function create(branchName: string): Promise<void> {
       return;
     }
 
+    // 設定ファイルを読み込む
+    const configLoader = new ConfigLoader();
+    const config = configLoader.loadConfig();
+    const hookManager = new HookManager();
+    
+    // 現在のブランチを取得
+    const fromBranch = await getCurrentBranch();
+    
+    // フック実行コンテキストを準備
+    const hookContext: HookContext = {
+      command: "create",
+      fromBranch: fromBranch,
+      toBranch: branchName,
+      projectRoot: process.cwd(),
+      claudeDir: path.join(os.homedir(), ".claude"),
+      timestamp: new Date()
+    };
+    
+    // pre-createフックを実行
+    if (config.hooks && hookManager.shouldExecuteHook('preCreate', config.hooks)) {
+      const success = await hookManager.executeHook('preCreate', config.hooks, hookContext);
+      if (!success) {
+        console.error(chalk.red("Pre-create hook failed. Aborting branch creation."));
+        return;
+      }
+    }
+
     // Create the branch
     await createBranch(branchName);
+    
+    // post-createフックを実行
+    if (config.hooks && hookManager.shouldExecuteHook('postCreate', config.hooks)) {
+      await hookManager.executeHook('postCreate', config.hooks, hookContext);
+      // post-createフックの失敗は作成自体には影響しない
+    }
     
     console.log(`${chalk.green("✓")} Created branch: ${chalk.cyan(branchName)}`);
     console.log(chalk.gray(`Switched to branch '${branchName}'`));
