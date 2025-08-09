@@ -29,8 +29,9 @@ function getTimestamp(): string {
  * @returns Promise<string> - Path to the created backup
  */
 export async function createBackup(name?: string): Promise<string> {
-  const claudePath = join(homedir(), DEFAULT_CLAUDE_PATH);
-  const backupDir = join(homedir(), DEFAULT_BACKUP_DIR);
+  const homeDir = process.env.HOME || homedir();
+  const claudePath = join(homeDir, DEFAULT_CLAUDE_PATH);
+  const backupDir = join(homeDir, DEFAULT_BACKUP_DIR);
   
   // Ensure backup directory exists
   if (!existsSync(backupDir)) {
@@ -84,7 +85,8 @@ export async function restoreBackup(backupName: string): Promise<boolean> {
  * @returns Promise<string[]> - Array of backup filenames
  */
 export async function listBackups(): Promise<string[]> {
-  const backupDir = join(homedir(), DEFAULT_BACKUP_DIR);
+  const homeDir = process.env.HOME || homedir();
+  const backupDir = join(homeDir, DEFAULT_BACKUP_DIR);
   
   if (!existsSync(backupDir)) {
     return [];

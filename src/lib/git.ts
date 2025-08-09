@@ -25,7 +25,8 @@ function resolvePath(path: string): string {
  * @throws Error if the path is not a Git repository
  */
 export async function getCurrentBranch(repoPath?: string): Promise<string> {
-  const targetPath = repoPath || join(homedir(), DEFAULT_CLAUDE_PATH);
+  const homeDir = process.env.HOME || homedir();
+  const targetPath = repoPath || join(homeDir, DEFAULT_CLAUDE_PATH);
   const resolvedPath = resolvePath(targetPath);
 
   try {
@@ -52,7 +53,8 @@ export async function getCurrentBranch(repoPath?: string): Promise<string> {
  * @throws Error if the path is not a Git repository
  */
 export async function getBranches(repoPath?: string): Promise<string[]> {
-  const targetPath = repoPath || join(homedir(), DEFAULT_CLAUDE_PATH);
+  const homeDir = process.env.HOME || homedir();
+  const targetPath = repoPath || join(homeDir, DEFAULT_CLAUDE_PATH);
   const resolvedPath = resolvePath(targetPath);
 
   try {
@@ -76,7 +78,8 @@ export async function getBranches(repoPath?: string): Promise<string[]> {
  * @throws Error if the branch doesn't exist or checkout fails
  */
 export async function switchBranch(branchName: string, repoPath?: string): Promise<void> {
-  const targetPath = repoPath || join(homedir(), DEFAULT_CLAUDE_PATH);
+  const homeDir = process.env.HOME || homedir();
+  const targetPath = repoPath || join(homeDir, DEFAULT_CLAUDE_PATH);
   const resolvedPath = resolvePath(targetPath);
 
   try {
@@ -110,7 +113,8 @@ export async function switchBranch(branchName: string, repoPath?: string): Promi
  * @throws Error if the branch already exists or creation fails
  */
 export async function createBranch(branchName: string, repoPath?: string): Promise<boolean> {
-  const targetPath = repoPath || join(homedir(), DEFAULT_CLAUDE_PATH);
+  const homeDir = process.env.HOME || homedir();
+  const targetPath = repoPath || join(homeDir, DEFAULT_CLAUDE_PATH);
   const resolvedPath = resolvePath(targetPath);
 
   try {
@@ -145,7 +149,9 @@ export async function createBranch(branchName: string, repoPath?: string): Promi
  * @throws Error if initialization fails
  */
 export async function initRepository(repoPath?: string): Promise<boolean> {
-  const targetPath = repoPath || join(homedir(), DEFAULT_CLAUDE_PATH);
+  // Use HOME environment variable if set (for testing), otherwise use homedir()
+  const homeDir = process.env.HOME || homedir();
+  const targetPath = repoPath || join(homeDir, DEFAULT_CLAUDE_PATH);
   const resolvedPath = resolvePath(targetPath);
 
   try {

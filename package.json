@@ -1,14 +1,15 @@
 {
   "name": "ccswitch",
-  "version": "0.8.5",
+  "version": "0.9.0",
   "description": "Claude Code configuration switcher - Git-based context management CLI",
   "module": "index.ts",
   "type": "module",
   "private": true,
   "scripts": {
-    "test": "bun test",
+    "test": "bun test test/unit",
+    "test:all": "bun test test/unit && bun test test/e2e",
     "test:watch": "bun test --watch",
-    "test:coverage": "bun test --coverage",
+    "test:coverage": "bun test test/unit --coverage",
     "test:unit": "bun test test/unit",
     "test:e2e": "bun test test/e2e",
     "dev": "bun run index.ts"

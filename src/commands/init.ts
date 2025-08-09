@@ -22,7 +22,8 @@ interface InitOptions {
  */
 export async function init(options: InitOptions = {}): Promise<void> {
   try {
-    const claudePath = join(homedir(), ".claude");
+    const homeDir = process.env.HOME || homedir();
+    const claudePath = join(homeDir, ".claude");
     
     // Create backup if ~/.claude already exists
     if (existsSync(claudePath) && !options.force) {

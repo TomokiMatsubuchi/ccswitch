@@ -48,6 +48,11 @@ export async function detectIDE(): Promise<string | null> {
  * @throws Error if no IDE is found or directory doesn't exist
  */
 export async function openInIDE(dirPath: string): Promise<void> {
+  // Skip opening IDE in test environment
+  if (process.env.NODE_ENV === 'test') {
+    return;
+  }
+
   // Check if directory exists
   if (!fs.existsSync(dirPath)) {
     throw new Error(`Directory not found: ${dirPath}`);

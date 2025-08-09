@@ -36,15 +36,43 @@ mock.module("chalk", () => ({
 }));
 
 describe("edit command", () => {
-  // Simple test just to verify the command exists
+  let consoleOutput: string[] = [];
+  const originalLog = console.log;
+  const originalError = console.error;
+
+  beforeEach(() => {
+    consoleOutput = [];
+    console.log = (...args: any[]) => {
+      consoleOutput.push(args.join(" "));
+    };
+    console.error = (...args: any[]) => {
+      consoleOutput.push(`ERROR: ${args.join(" ")}`);
+    };
+  });
+
+  afterEach(() => {
+    console.log = originalLog;
+    console.error = originalError;
+  });
+
   test("edit command should be defined", () => {
     expect(edit).toBeDefined();
     expect(typeof edit).toBe("function");
   });
-  
-  test("edit command should accept optional branch parameter", async () => {
-    // Test that the function can be called with a branch name
-    const promise = edit("test-branch");
-    expect(promise).toBeDefined();
+
+  test("edit command without branch should open IDE", async () => {
+    await edit();
+    
+    // Since IDE opening is mocked in test environment,
+    // we just check that no error occurred
+    expect(consoleOutput.some(line => line.includes("ERROR"))).toBe(false);
+  });
+
+  test("edit command with branch should switch and open IDE", async () => {
+    await edit("test-branch");
+    
+    expect(consoleOutput.some(line => 
+      line.includes("Switching to branch") || line.includes("Switched to branch")
+    )).toBe(true);
   });
 });

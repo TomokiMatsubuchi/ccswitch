@@ -37,7 +37,8 @@ function estimateTokensFromSize(sizeInBytes: number): number {
  * Measure token usage for current configuration
  */
 export async function measureTokens(targetPath?: string): Promise<TokenMetrics> {
-  const claudePath = targetPath || join(homedir(), DEFAULT_CLAUDE_PATH);
+  const homeDir = process.env.HOME || homedir();
+  const claudePath = targetPath || join(homeDir, DEFAULT_CLAUDE_PATH);
   
   if (!existsSync(claudePath)) {
     throw new Error(`~/.claude does not exist`);
@@ -87,11 +88,12 @@ export async function measureTokens(targetPath?: string): Promise<TokenMetrics> 
 /**
  * Measure performance metrics
  */
-export async function measurePerformance(): Promise<PerformanceMetrics> {
+export async function measurePerformance(targetPath?: string): Promise<PerformanceMetrics> {
   const startTime = Date.now();
   
   // Simulate load time by reading configuration
-  const claudePath = join(homedir(), DEFAULT_CLAUDE_PATH);
+  const homeDir = process.env.HOME || homedir();
+  const claudePath = targetPath || join(homeDir, DEFAULT_CLAUDE_PATH);
   if (existsSync(claudePath)) {
     readdirSync(claudePath);
   }
@@ -115,7 +117,8 @@ export async function measurePerformance(): Promise<PerformanceMetrics> {
  * Validate configuration files
  */
 export async function validateConfig(targetPath?: string): Promise<ValidationResult> {
-  const claudePath = targetPath || join(homedir(), DEFAULT_CLAUDE_PATH);
+  const homeDir = process.env.HOME || homedir();
+  const claudePath = targetPath || join(homeDir, DEFAULT_CLAUDE_PATH);
   const warnings: string[] = [];
   const errors: string[] = [];
   

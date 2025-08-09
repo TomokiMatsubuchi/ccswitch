@@ -41,7 +41,8 @@ export function getDefaultConfig(): Config {
  * @returns Promise<Config> - Configuration object
  */
 export async function loadConfig(): Promise<Config> {
-  const configPath = join(homedir(), DEFAULT_CLAUDE_PATH, CONFIG_FILE);
+  const homeDir = process.env.HOME || homedir();
+  const configPath = join(homeDir, DEFAULT_CLAUDE_PATH, CONFIG_FILE);
   
   if (!existsSync(configPath)) {
     // Return default config if file doesn't exist
@@ -69,7 +70,8 @@ export async function loadConfig(): Promise<Config> {
  * @returns Promise<boolean> - true if saved successfully
  */
 export async function saveConfig(config: Config): Promise<boolean> {
-  const claudePath = join(homedir(), DEFAULT_CLAUDE_PATH);
+  const homeDir = process.env.HOME || homedir();
+  const claudePath = join(homeDir, DEFAULT_CLAUDE_PATH);
   const configPath = join(claudePath, CONFIG_FILE);
   
   try {

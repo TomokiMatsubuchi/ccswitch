@@ -59,7 +59,7 @@ describe("create command", () => {
   });
 
   test("should create a new branch", async () => {
-    await create("feature/test");
+    await create("feature/test", { openInIDE: false });
     
     expect(consoleOutput).toContain("[GREEN]✓[/GREEN] Created branch: [CYAN]feature/test[/CYAN]");
     expect(consoleOutput.some(line => 
@@ -68,14 +68,14 @@ describe("create command", () => {
   });
 
   test("should validate branch name format", async () => {
-    await create("invalid branch name");
+    await create("invalid branch name", { openInIDE: false });
     
     expect(consoleOutput[0]).toContain("ERROR:");
     expect(consoleOutput[0]).toContain("Invalid branch name");
   });
 
   test("should suggest naming conventions", async () => {
-    await create("mybranch");
+    await create("mybranch", { openInIDE: false });
     
     expect(consoleOutput.some(line => 
       line.includes("slim/") || line.includes("project/") || line.includes("persona/")
@@ -90,7 +90,7 @@ describe("create command", () => {
       )
     }));
 
-    await create("feature/existing");
+    await create("feature/existing", { openInIDE: false });
     
     expect(consoleOutput[0]).toContain("ERROR:");
     expect(consoleOutput[0]).toContain("already exists");
@@ -104,7 +104,7 @@ describe("create command", () => {
       )
     }));
 
-    await create("feature/test");
+    await create("feature/test", { openInIDE: false });
     
     expect(consoleOutput[0]).toContain("ERROR:");
     expect(consoleOutput[0]).toContain("~/.claude is not a Git repository");

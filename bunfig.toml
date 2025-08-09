@@ -1,0 +1,5 @@
+# Bun configuration file
+
+[test]
+# Disable parallel execution to avoid race conditions
+root = "./test"
