@@ -8,6 +8,12 @@ import { create } from "./commands/create";
 import { testPerformance } from "./commands/test";
 import { auto } from "./commands/auto";
 import { edit } from "./commands/edit";
+import { readFileSync } from "fs";
+import { join, dirname } from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const packageJson = JSON.parse(readFileSync(join(__dirname, "../package.json"), "utf8"));
 
 const program = new Command();
 
@@ -16,7 +22,7 @@ program
   .description("Claude Code Switch - Git-based configuration management for ~/.claude\n\n" +
     "  Manage different Claude Code configurations using Git branches.\n" +
     "  Each branch can contain different settings, reducing token usage by 60-70%.")
-  .version("0.8.5")
+  .version(packageJson.version)
   .addHelpText("after", `
 Examples:
   $ ccswitch init                  Initialize Git repository in ~/.claude
