@@ -1,29 +1,41 @@
-import { describe, expect, test, mock } from "bun:test";
+import { describe, expect, test, mock, beforeEach, afterEach } from "bun:test";
 import { createBackup, restoreBackup, listBackups } from "../../src/lib/backup";
 import * as fs from "fs";
 import * as path from "path";
 
-// Mock fs module
-mock.module("fs", () => ({
-  existsSync: mock((path: string) => {
-    if (path.includes(".ccswitch-backups")) return true;
-    return false;
-  }),
-  mkdirSync: mock(() => undefined),
-  copyFileSync: mock(() => undefined),
-  readdirSync: mock(() => ["backup-20250109-120000.tar.gz", "backup-20250108-150000.tar.gz"]),
-  statSync: mock(() => ({
-    isFile: () => true,
-    mtime: new Date()
-  }))
-}));
-
-// Mock child_process for tar operations
-mock.module("child_process", () => ({
-  execSync: mock(() => Buffer.from(""))
-}));
-
 describe("Backup Management", () => {
+  beforeEach(() => {
+    // Mock fs module for this test suite only
+    mock.module("fs", () => ({
+      ...fs,
+      existsSync: mock((path: string) => {
+        if (path.includes(".ccswitch-backups")) return true;
+        return false;
+      }),
+      mkdirSync: mock(() => undefined),
+      copyFileSync: mock(() => undefined),
+      readdirSync: mock((path: string) => {
+        if (path.includes(".ccswitch-backups")) {
+          return ["backup-20250109-120000.tar.gz", "backup-20250108-150000.tar.gz"];
+        }
+        return [];
+      }),
+      statSync: mock(() => ({
+        isFile: () => true,
+        mtime: new Date()
+      }))
+    }));
+
+    // Mock child_process for tar operations
+    mock.module("child_process", () => ({
+      execSync: mock(() => Buffer.from(""))
+    }));
+  });
+
+  afterEach(() => {
+    // Clean up mocks
+    mock.restore();
+  });
   test("should create a backup of current configuration", async () => {
     const backupPath = await createBackup();
     

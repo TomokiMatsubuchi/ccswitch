@@ -1,24 +1,8 @@
-import { describe, expect, test, mock, beforeEach } from "bun:test";
+import { describe, expect, test, mock, beforeEach, afterEach } from "bun:test";
 import { initRepository } from "../../src/lib/git";
 import simpleGit from "simple-git";
 import * as fs from "fs";
 import * as path from "path";
-
-// Mock fs module
-mock.module("fs", () => ({
-  existsSync: mock((path: string) => {
-    // Mock that ~/.claude exists but is not a Git repo
-    if (path.includes(".claude")) return true;
-    if (path.includes(".gitignore")) return false;
-    if (path.includes(".git")) return false;
-    return false;
-  }),
-  mkdirSync: mock(() => undefined),
-  writeFileSync: mock(() => undefined),
-  promises: {
-    mkdir: mock(() => Promise.resolve())
-  }
-}));
 
 // Mock simple-git
 const mockInit = mock(() => Promise.resolve());
@@ -40,6 +24,28 @@ mock.module("simple-git", () => {
 });
 
 describe("initRepository", () => {
+  beforeEach(() => {
+    // Mock fs module for this test suite
+    mock.module("fs", () => ({
+      existsSync: mock((path: string) => {
+        // Mock that ~/.claude exists but is not a Git repo
+        if (path.includes(".claude")) return true;
+        if (path.includes(".gitignore")) return false;
+        if (path.includes(".git")) return false;
+        return false;
+      }),
+      mkdirSync: mock(() => undefined),
+      writeFileSync: mock(() => undefined),
+      promises: {
+        mkdir: mock(() => Promise.resolve())
+      }
+    }));
+  });
+
+  afterEach(() => {
+    mock.restore();
+  });
+
   test("should initialize Git repository in ~/.claude", async () => {
     const result = await initRepository();
     

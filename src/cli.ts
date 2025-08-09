@@ -15,7 +15,7 @@ program
   .description("Claude Code Switch - Git-based configuration management for ~/.claude\n\n" +
     "  Manage different Claude Code configurations using Git branches.\n" +
     "  Each branch can contain different settings, reducing token usage by 60-70%.")
-  .version("0.6.0")
+  .version("0.7.0")
   .addHelpText("after", `
 Examples:
   $ ccswitch init                  Initialize Git repository in ~/.claude

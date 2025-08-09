@@ -42,11 +42,6 @@ mock.module("../../../src/lib/git", () => ({
   switchBranch: mock(() => Promise.resolve(true))
 }));
 
-// Mock file system
-mock.module("fs", () => ({
-  existsSync: mock(() => true)
-}));
-
 // Import command after all mocks are set up
 import { auto } from "../../../src/commands/auto";
 
@@ -68,6 +63,7 @@ describe("auto command", () => {
   afterEach(() => {
     console.log = originalLog;
     console.error = originalError;
+    mock.restore();
   });
 
   test("should detect project type and suggest branch", async () => {

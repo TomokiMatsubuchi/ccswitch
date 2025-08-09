@@ -126,11 +126,6 @@ mock.module("../../../src/lib/config", () => ({
   saveConfig: mock(() => Promise.resolve(true))
 }));
 
-// Mock fs module
-mock.module("fs", () => ({
-  existsSync: mock(() => true) // Assume ~/.claude exists for backup
-}));
-
 // Chalk is already mocked above
 
 describe("init command", () => {
@@ -139,6 +134,10 @@ describe("init command", () => {
   const originalError = console.error;
 
   beforeEach(() => {
+    // Mock fs module
+    mock.module("fs", () => ({
+      existsSync: mock(() => true) // Assume ~/.claude exists for backup
+    }));
     consoleOutput = [];
     console.log = (...args: any[]) => {
       consoleOutput.push(args.join(" "));
@@ -151,6 +150,7 @@ describe("init command", () => {
   afterEach(() => {
     console.log = originalLog;
     console.error = originalError;
+    mock.restore();
   });
 
   test("should initialize Git repository successfully", async () => {

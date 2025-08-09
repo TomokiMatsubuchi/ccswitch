@@ -1,29 +1,41 @@
-import { describe, expect, test, mock, beforeEach } from "bun:test";
+import { describe, expect, test, mock, beforeEach, afterEach } from "bun:test";
 import { loadConfig, saveConfig, getDefaultConfig } from "../../src/lib/config";
 import * as fs from "fs";
 import * as path from "path";
 
-// Mock fs module
-mock.module("fs", () => ({
-  existsSync: mock((path: string) => {
-    if (path.includes(".ccswitchrc")) return true;
-    return false;
-  }),
-  readFileSync: mock(() => JSON.stringify({
-    version: "0.3.0",
-    defaultBranch: "main",
-    namingConventions: {
-      slim: "Minimal configurations",
-      project: "Project-specific settings",
-      client: "Client-specific settings",
-      persona: "Persona-focused settings"
-    }
-  })),
-  writeFileSync: mock(() => undefined),
-  mkdirSync: mock(() => undefined)
-}));
-
 describe("Config Management", () => {
+  // このテストファイル内でのみfsをモック
+  beforeEach(() => {
+    mock.module("fs", () => ({
+      ...fs,
+      existsSync: mock((path: string) => {
+        if (path.includes(".ccswitchrc")) return true;
+        return false;
+      }),
+      readFileSync: mock((path: string, ...args: any[]) => {
+        if (path.includes(".ccswitchrc")) {
+          return JSON.stringify({
+            version: "0.3.0",
+            defaultBranch: "main",
+            namingConventions: {
+              slim: "Minimal configurations",
+              project: "Project-specific settings",
+              client: "Client-specific settings",
+              persona: "Persona-focused settings"
+            }
+          });
+        }
+        throw new Error(`File not found: ${path}`);
+      }),
+      writeFileSync: mock(() => undefined),
+      mkdirSync: mock(() => undefined)
+    }));
+  });
+
+  afterEach(() => {
+    // モックをリセット
+    mock.restore();
+  });
   test("should load config from ~/.claude/.ccswitchrc", async () => {
     const config = await loadConfig();
     

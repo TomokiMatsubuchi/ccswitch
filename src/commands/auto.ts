@@ -2,6 +2,8 @@ import chalk from "chalk";
 import { select, confirm } from "@inquirer/prompts";
 import { detectProjectType, getProjectFiles } from "../lib/projectDetector";
 import { getCurrentBranch, getBranches, switchBranch } from "../lib/git";
+import { ConfigLoader } from "../lib/configLoader";
+import { PresetManager } from "../lib/preset";
 
 interface AutoOptions {
   verbose?: boolean;
@@ -18,9 +20,20 @@ export async function auto(options: AutoOptions = {}): Promise<void> {
     console.log(chalk.cyan("🔍 Analyzing project..."));
     console.log();
     
+    // 設定ファイルを読み込む
+    const configLoader = new ConfigLoader();
+    const config = configLoader.loadConfig();
+    const presetManager = new PresetManager();
+    
     // Detect project type
     const detection = detectProjectType();
     const currentBranch = await getCurrentBranch();
+    
+    // 自動切り替えが無効の場合は警告
+    if (config.autoSwitch && !config.autoSwitch.enabled) {
+      console.log(chalk.yellow("⚠️  Auto-switch is disabled in configuration"));
+      console.log(chalk.gray("Enable it in .ccswitchrc to use automatic switching"));
+    }
     
     if (detection.type === "unknown" || detection.confidence < 0.3) {
       console.log(chalk.yellow("⚠️  Could not determine project type with confidence"));
@@ -50,7 +63,7 @@ export async function auto(options: AutoOptions = {}): Promise<void> {
     console.log(`  Current branch: ${chalk.yellow(currentBranch)}`);
     
     if (detection.suggestedBranch) {
-      console.log(`  Suggested branch: ${chalk.green(detection.suggestedBranch)}`);
+      console.log(`  Default suggestion: ${chalk.green(detection.suggestedBranch)}`);
     }
     
     if (options.verbose && detection.files.length > 0) {
@@ -63,13 +76,32 @@ export async function auto(options: AutoOptions = {}): Promise<void> {
     
     console.log();
     
+    // プリセットから推奨ブランチを取得
+    let suggestedBranch = detection.suggestedBranch;
+    
+    // プロジェクトタイプに対応するプリセットを検索
+    const preset = presetManager.getPresetByProjectType(detection.type, config);
+    if (preset) {
+      suggestedBranch = preset.branch;
+      console.log(chalk.gray(`Using preset '${preset.name}' for ${detection.type} project`));
+    }
+    
+    // 設定のautoSwitchルールも確認
+    if (config.autoSwitch?.rules) {
+      const rule = config.autoSwitch.rules.find(r => r.projectType === detection.type);
+      if (rule) {
+        suggestedBranch = rule.branch;
+        console.log(chalk.gray(`Using auto-switch rule for ${detection.type} project`));
+      }
+    }
+    
     // Check if suggested branch exists
-    if (detection.suggestedBranch) {
+    if (suggestedBranch) {
       const branches = await getBranches();
-      const branchExists = branches.includes(detection.suggestedBranch);
+      const branchExists = branches.includes(suggestedBranch);
       
       // Check if already on the suggested branch
-      if (currentBranch === detection.suggestedBranch) {
+      if (currentBranch === suggestedBranch) {
         console.log(chalk.green("✓ Already on the optimal branch for this project"));
         return;
       }
@@ -77,7 +109,7 @@ export async function auto(options: AutoOptions = {}): Promise<void> {
       // Dry run mode
       if (options.dryRun) {
         console.log(chalk.blue("🔵 DRY RUN MODE"));
-        console.log(chalk.gray(`Would switch from '${currentBranch}' to '${detection.suggestedBranch}'`));
+        console.log(chalk.gray(`Would switch from '${currentBranch}' to '${suggestedBranch}'`));
         console.log(chalk.gray("No changes made"));
         return;
       }
@@ -89,21 +121,21 @@ export async function auto(options: AutoOptions = {}): Promise<void> {
         // Ask for confirmation
         if (branchExists) {
           shouldSwitch = await confirm({
-            message: `Switch to branch '${detection.suggestedBranch}'?`,
+            message: `Switch to branch '${suggestedBranch}'?`,
             default: true
           });
         } else {
           const action = await select({
-            message: `Branch '${detection.suggestedBranch}' doesn't exist. What would you like to do?`,
+            message: `Branch '${suggestedBranch}' doesn't exist. What would you like to do?`,
             choices: [
-              { value: 'create', name: `Create and switch to '${detection.suggestedBranch}'` },
+              { value: 'create', name: `Create and switch to '${suggestedBranch}'` },
               { value: 'manual', name: 'Select a different branch' },
               { value: 'skip', name: 'Stay on current branch' }
             ]
           });
           
           if (action === 'create') {
-            console.log(chalk.yellow(`Branch creation not yet implemented. Use: ccswitch create ${detection.suggestedBranch}`));
+            console.log(chalk.yellow(`Branch creation not yet implemented. Use: ccswitch create ${suggestedBranch}`));
             return;
           } else if (action === 'manual') {
             console.log(chalk.gray("Use 'ccswitch switch' to manually select a branch"));
@@ -115,9 +147,9 @@ export async function auto(options: AutoOptions = {}): Promise<void> {
       }
       
       if (shouldSwitch && branchExists) {
-        console.log(chalk.gray(`Switching to branch '${detection.suggestedBranch}'...`));
-        await switchBranch(detection.suggestedBranch);
-        console.log(chalk.green(`✓ Switched to branch '${detection.suggestedBranch}'`));
+        console.log(chalk.gray(`Switching to branch '${suggestedBranch}'...`));
+        await switchBranch(suggestedBranch);
+        console.log(chalk.green(`✓ Switched to branch '${suggestedBranch}'`));
       }
     } else {
       console.log(chalk.yellow("No specific branch recommendation for this project type"));
